@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Rupesh"
+            }
+        ],
+        "Description": "Shows connected Bluetooth audio device battery and codec info",
+        "Icon": "audio-headset-bluetooth",
+        "Id": "org.rupesh.btaudioinfo",
+        "License": "MIT",
+        "Name": "BT Audio Info",
+        "Version": "0.1.0",
+        "Category": "System Information"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0.4"
+}
