@@ -66,7 +66,7 @@ kpackagetool6 --type Plasma/Applet --upgrade bluetune.plasmoid
 ### Option B — Install from source (for development)
 
 ```bash
-git clone https://github.com/<your-username>/BlueTune.git
+git clone https://github.com/rupeshofficedata/BlueTune.git
 ln -s "$(pwd)/BlueTune" ~/.local/share/plasma/plasmoids/org.rupesh.bluetune
 ```
 
