@@ -1,6 +1,8 @@
 #!/bin/bash
-# Outputs JSON array of connected Bluetooth audio devices with battery + codec info.
-# Used by the org.rupesh.btaudioinfo Plasma widget.
+# Outputs a JSON array of active Bluetooth audio sinks' codec + sample
+# format, keyed by MAC address. Used by the org.rupesh.bluetune Plasma
+# widget to enrich BluezQt's device state, since BlueZ has no codec info
+# over D-Bus (it's a PipeWire/PulseAudio-side concept).
 
 set -uo pipefail
 
@@ -11,40 +13,26 @@ json_escape() {
     printf '%s' "$s"
 }
 
-devices=$(bluetoothctl devices Connected 2>/dev/null)
+sink_names=$(pactl list short sinks 2>/dev/null | awk '{print $2}' | grep '^bluez_output\.')
+all_sinks=$(pactl list sinks 2>/dev/null)
 
 entries=()
-while IFS= read -r line; do
-    [ -z "$line" ] && continue
-    mac=$(echo "$line" | awk '{print $2}')
-    name=$(echo "$line" | cut -d' ' -f3-)
-    [ -z "$mac" ] && continue
+while IFS= read -r sink_name; do
+    [ -z "$sink_name" ] && continue
+    mac_us=$(echo "$sink_name" | sed -E 's/^bluez_output\.([0-9A-Fa-f_]+)\..*/\1/')
+    mac=$(echo "$mac_us" | tr '_' ':')
 
-    info=$(bluetoothctl info "$mac" 2>/dev/null)
-
-    battery=$(echo "$info" | grep -oP 'Battery Percentage:.*\(\K\d+(?=\))')
-    [ -z "$battery" ] && battery="null"
-
-    icon=$(echo "$info" | grep -oP 'Icon:\s*\K.*')
-    is_audio="false"
-    echo "$info" | grep -qi "Audio Sink\|Handsfree\|Headset" && is_audio="true"
+    sink_info=$(echo "$all_sinks" | grep -A 20 "Name: ${sink_name}$")
 
     codec="null"
     samplespec="null"
-    mac_us=$(echo "$mac" | tr ':' '_')
-    sink_info=$(pactl list sinks 2>/dev/null | grep -A 20 "bluez_output.${mac_us}\." )
-    if [ -n "$sink_info" ]; then
-        c=$(echo "$sink_info" | grep -oP 'api\.bluez5\.codec = "\K[^"]+' | head -1)
-        ss=$(echo "$sink_info" | grep -m1 "Sample Specification:" | sed 's/.*Sample Specification:\s*//')
-        [ -n "$c" ] && codec="\"$(json_escape "$c")\""
-        [ -n "$ss" ] && samplespec="\"$(json_escape "$ss")\""
-    fi
+    c=$(echo "$sink_info" | grep -oP 'api\.bluez5\.codec = "\K[^"]+' | head -1)
+    ss=$(echo "$sink_info" | grep -m1 "Sample Specification:" | sed 's/.*Sample Specification:\s*//')
+    [ -n "$c" ] && codec="\"$(json_escape "$c")\""
+    [ -n "$ss" ] && samplespec="\"$(json_escape "$ss")\""
 
-    name_esc=$(json_escape "$name")
-    icon_esc=$(json_escape "${icon:-audio-headset-bluetooth}")
-
-    entries+=("{\"name\":\"$name_esc\",\"mac\":\"$mac\",\"battery\":$battery,\"isAudio\":$is_audio,\"codec\":$codec,\"sampleSpec\":$samplespec,\"icon\":\"$icon_esc\"}")
-done <<< "$devices"
+    entries+=("{\"mac\":\"$mac\",\"codec\":$codec,\"sampleSpec\":$samplespec}")
+done <<< "$sink_names"
 
 IFS=,
 echo "[${entries[*]:-}]"

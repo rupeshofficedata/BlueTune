@@ -6,13 +6,14 @@
                 "Name": "Rupesh"
             }
         ],
-        "Description": "Shows connected Bluetooth audio device battery and codec info",
-        "Icon": "audio-headset-bluetooth",
-        "Id": "org.rupesh.btaudioinfo",
+        "Description": "Bluetooth Manager",
+        "Icon": "preferences-system-bluetooth",
+        "Id": "org.rupesh.bluetune",
         "License": "MIT",
-        "Name": "BT Audio Info",
+        "Name": "BlueTune",
         "Version": "0.1.0",
         "Category": "System Information"
     },
-    "X-Plasma-API-Minimum-Version": "6.0.4"
+    "X-Plasma-API-Minimum-Version": "6.0.4",
+    "X-Plasma-NotificationAreaCategory": "Hardware"
 }
