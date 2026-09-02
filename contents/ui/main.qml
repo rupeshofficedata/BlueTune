@@ -184,8 +184,12 @@ PlasmoidItem {
 
     compactRepresentation: MouseArea {
         id: compactRoot
-        Layout.minimumWidth: Kirigami.Units.iconSizes.medium * 1.3
-        Layout.minimumHeight: Kirigami.Units.iconSizes.medium * 1.3
+        // Matches the device-row icon size used inside the dropdown
+        // (iconSizes.smallMedium) instead of an oversized standalone
+        // value, so the tray glyph reads at the same proportion as
+        // other system tray icons instead of dominating them.
+        Layout.minimumWidth: Kirigami.Units.iconSizes.smallMedium
+        Layout.minimumHeight: Kirigami.Units.iconSizes.smallMedium
         onClicked: root.expanded = !root.expanded
 
         Kirigami.Icon {
@@ -200,8 +204,8 @@ PlasmoidItem {
         // zero size, invisibly.
         Rectangle {
             visible: root.connectedDevices.length > 0
-            width: Kirigami.Units.gridUnit * 0.85
-            height: Kirigami.Units.gridUnit * 0.85
+            width: Kirigami.Units.gridUnit * 0.55
+            height: Kirigami.Units.gridUnit * 0.55
             radius: width / 2
             color: Kirigami.Theme.highlightColor
             anchors.right: parent.right
@@ -428,7 +432,7 @@ PlasmoidItem {
                                     }
 
                                     RowLayout {
-                                        spacing: Kirigami.Units.largeSpacing * 1.3
+                                        spacing: Kirigami.Units.largeSpacing * 0.7
                                         Layout.fillWidth: true
 
                                         Rectangle {
