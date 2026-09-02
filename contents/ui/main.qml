@@ -220,7 +220,7 @@ PlasmoidItem {
         id: fullRoot
 
         readonly property real popupWidthUnits: 31 * 0.85
-        readonly property real popupHeightUnits: (8 + deviceRepeater.count * 16) * 0.7
+        readonly property real popupHeightUnits: (8 + deviceRepeater.count * 16) * 0.7 * 0.3 * 1.3 * 1.5
 
         Layout.minimumWidth: Kirigami.Units.gridUnit * popupWidthUnits
         Layout.minimumHeight: Kirigami.Units.gridUnit * popupHeightUnits
@@ -303,7 +303,7 @@ PlasmoidItem {
             visible: deviceRepeater.count > 0
 
             background: Rectangle {
-                radius: 7
+                radius: 10
                 color: Kirigami.Theme.alternateBackgroundColor
                 border.width: 1
                 border.color: Kirigami.Theme.disabledTextColor
@@ -346,42 +346,68 @@ PlasmoidItem {
                         }
 
                         Item {
-                            id: rowHoverArea
+                            id: rowBlock
                             Layout.fillWidth: true
-                            implicitHeight: rowContent.implicitHeight + Kirigami.Units.largeSpacing * 2
+                            implicitHeight: rowBlockContent.implicitHeight
 
-                            HoverHandler { id: rowHover }
+                            // Whole-row click target: toggles expand/collapse
+                            // from anywhere in the row's empty space. Sits
+                            // behind the Connect/Disconnect button (declared
+                            // later below), which still gets its own clicks
+                            // first since later siblings paint and hit-test
+                            // on top. Also drives the hover tint below, since
+                            // a HoverHandler here would get its "hovered"
+                            // state blocked while the pointer is over a child
+                            // button's own internal hover handling.
+                            MouseArea {
+                                id: rowMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: deviceRow.expanded = !deviceRow.expanded
+                            }
 
                             Rectangle {
                                 anchors.fill: parent
-                                opacity: rowHover.hovered ? 1 : 0
+                                anchors.margins: 3
+                                radius: 6
                                 Behavior on opacity { NumberAnimation { duration: 150 } }
                                 gradient: Gradient {
                                     orientation: Gradient.Horizontal
                                     GradientStop { position: 0.0; color: Kirigami.Theme.highlightColor }
                                     GradientStop { position: 1.0; color: "transparent" }
                                 }
-                                opacity: rowHover.hovered ? 0.12 : 0
+                                opacity: rowMouse.containsMouse ? 0.30 : 0
                             }
+
+                            // Groups the header row and the expanded
+                            // Forget/Trusted footer into one block so the
+                            // hover tint/click target above (sized to this
+                            // ColumnLayout's implicit height) spans both,
+                            // instead of stopping at the header.
+                            ColumnLayout {
+                                id: rowBlockContent
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                spacing: 0
 
                             RowLayout {
                                 id: rowContent
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.margins: Kirigami.Units.largeSpacing
-                                spacing: Kirigami.Units.largeSpacing
+                                Layout.fillWidth: true
+                                Layout.margins: Kirigami.Units.largeSpacing * 1.4
+                                spacing: Kirigami.Units.largeSpacing * 1.5
                                 opacity: modelData.connected ? 1.0 : 0.55
 
                                 Kirigami.Icon {
                                     source: modelData.icon
-                                    Layout.preferredWidth: Kirigami.Units.iconSizes.medium
-                                    Layout.preferredHeight: Kirigami.Units.iconSizes.medium
+                                    Layout.alignment: Qt.AlignTop
+                                    Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
+                                    Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium
                                 }
 
                                 ColumnLayout {
                                     Layout.fillWidth: true
-                                    spacing: Kirigami.Units.smallSpacing
+                                    spacing: Kirigami.Units.largeSpacing * 1.6
 
                                     PlasmaComponents3.Label {
                                         text: modelData.name
@@ -391,7 +417,7 @@ PlasmoidItem {
                                     }
 
                                     RowLayout {
-                                        spacing: Kirigami.Units.largeSpacing
+                                        spacing: Kirigami.Units.largeSpacing * 1.3
                                         Layout.fillWidth: true
 
                                         Rectangle {
@@ -403,25 +429,26 @@ PlasmoidItem {
                                                 return Kirigami.Theme.negativeTextColor;
                                             }
                                             radius: height / 2
-                                            color: "transparent"
+                                            color: Kirigami.Theme.alternateBackgroundColor
                                             border.width: 1
                                             border.color: pillColor
-                                            implicitWidth: batteryPillContent.implicitWidth + Kirigami.Units.largeSpacing * 2
-                                            implicitHeight: batteryPillContent.implicitHeight + Kirigami.Units.largeSpacing
+                                            implicitWidth: batteryPillContent.implicitWidth + Kirigami.Units.largeSpacing * 2 * 0.75
+                                            implicitHeight: batteryPillContent.implicitHeight + Kirigami.Units.largeSpacing * 0.75
 
                                             RowLayout {
                                                 id: batteryPillContent
                                                 anchors.centerIn: parent
-                                                spacing: Kirigami.Units.smallSpacing / 2
+                                                spacing: Kirigami.Units.smallSpacing * 1.4
                                                 Kirigami.Icon {
                                                     source: "battery-" + (Math.min(100, Math.floor((modelData.battery || 0) / 10) * 10)).toString().padStart(3, '0') + "-symbolic"
                                                     color: batteryPill.pillColor
-                                                    Layout.preferredWidth: Kirigami.Units.iconSizes.small
-                                                    Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                                                    Layout.preferredWidth: Kirigami.Units.iconSizes.small * 0.75
+                                                    Layout.preferredHeight: Kirigami.Units.iconSizes.small * 0.75
                                                 }
                                                 PlasmaComponents3.Label {
                                                     text: (modelData.battery || 0) + "%"
                                                     color: batteryPill.pillColor
+                                                    font.pointSize: Kirigami.Theme.defaultFont.pointSize * 0.7
                                                 }
                                             }
                                         }
@@ -429,25 +456,26 @@ PlasmoidItem {
                                         Rectangle {
                                             visible: modelData.isAudio && !!modelData.codec
                                             radius: height / 2
-                                            color: "transparent"
+                                            color: Kirigami.Theme.alternateBackgroundColor
                                             border.width: 1
                                             border.color: Kirigami.Theme.highlightColor
-                                            implicitWidth: codecPillContent.implicitWidth + Kirigami.Units.largeSpacing * 2
-                                            implicitHeight: codecPillContent.implicitHeight + Kirigami.Units.largeSpacing
+                                            implicitWidth: codecPillContent.implicitWidth + Kirigami.Units.largeSpacing * 2 * 0.75
+                                            implicitHeight: codecPillContent.implicitHeight + Kirigami.Units.largeSpacing * 0.75
 
                                             RowLayout {
                                                 id: codecPillContent
                                                 anchors.centerIn: parent
-                                                spacing: Kirigami.Units.smallSpacing / 2
+                                                spacing: Kirigami.Units.smallSpacing * 1.4
                                                 Kirigami.Icon {
                                                     source: "audio-x-generic"
                                                     color: Kirigami.Theme.highlightColor
-                                                    Layout.preferredWidth: Kirigami.Units.iconSizes.small
-                                                    Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                                                    Layout.preferredWidth: Kirigami.Units.iconSizes.small * 0.75
+                                                    Layout.preferredHeight: Kirigami.Units.iconSizes.small * 0.75
                                                 }
                                                 PlasmaComponents3.Label {
                                                     text: (modelData.codec || "").toUpperCase()
                                                     color: Kirigami.Theme.highlightColor
+                                                    font.pointSize: Kirigami.Theme.defaultFont.pointSize * 0.7
                                                 }
                                             }
                                         }
@@ -455,25 +483,26 @@ PlasmoidItem {
                                         Rectangle {
                                             visible: modelData.isAudio && !!modelData.sampleSpec
                                             radius: height / 2
-                                            color: "transparent"
+                                            color: Kirigami.Theme.alternateBackgroundColor
                                             border.width: 1
                                             border.color: Kirigami.Theme.highlightColor
-                                            implicitWidth: formatPillContent.implicitWidth + Kirigami.Units.largeSpacing * 2
-                                            implicitHeight: formatPillContent.implicitHeight + Kirigami.Units.largeSpacing
+                                            implicitWidth: formatPillContent.implicitWidth + Kirigami.Units.largeSpacing * 2 * 0.75
+                                            implicitHeight: formatPillContent.implicitHeight + Kirigami.Units.largeSpacing * 0.75
 
                                             RowLayout {
                                                 id: formatPillContent
                                                 anchors.centerIn: parent
-                                                spacing: Kirigami.Units.smallSpacing / 2
+                                                spacing: Kirigami.Units.smallSpacing * 1.4
                                                 Kirigami.Icon {
-                                                    source: "view-media-equalizer-symbolic"
+                                                    source: "waveform-symbolic"
                                                     color: Kirigami.Theme.highlightColor
-                                                    Layout.preferredWidth: Kirigami.Units.iconSizes.small
-                                                    Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                                                    Layout.preferredWidth: Kirigami.Units.iconSizes.small * 0.75
+                                                    Layout.preferredHeight: Kirigami.Units.iconSizes.small * 0.75
                                                 }
                                                 PlasmaComponents3.Label {
                                                     text: root.shortSampleSpec(modelData.sampleSpec)
                                                     color: Kirigami.Theme.highlightColor
+                                                    font.pointSize: Kirigami.Theme.defaultFont.pointSize * 0.7
                                                 }
                                             }
                                         }
@@ -502,49 +531,60 @@ PlasmoidItem {
                                 PlasmaComponents3.BusyIndicator {
                                     visible: deviceRow.actionPending
                                     running: visible
+                                    Layout.alignment: Qt.AlignTop
                                     Layout.preferredWidth: Kirigami.Units.iconSizes.small
                                     Layout.preferredHeight: Kirigami.Units.iconSizes.small
                                 }
                                 PlasmaComponents3.Button {
                                     text: modelData.device.connected ? "Disconnect" : "Connect"
                                     enabled: !deviceRow.actionPending
+                                    Layout.alignment: Qt.AlignTop
+                                    Layout.preferredWidth: Kirigami.Units.gridUnit * 5.2 * 0.85
                                     onClicked: deviceRow.toggleConnection()
                                 }
                                 PlasmaComponents3.ToolButton {
+                                    // A real button (not a custom
+                                    // Rectangle+Icon) so its pressed/active
+                                    // look matches the other buttons in the
+                                    // row natively, per the reference
+                                    // screenshot's bordered chevron style.
                                     icon.name: deviceRow.expanded ? "go-up-symbolic" : "go-down-symbolic"
+                                    checked: deviceRow.expanded
+                                    Layout.alignment: Qt.AlignTop
                                     onClicked: deviceRow.expanded = !deviceRow.expanded
                                 }
                             }
-                        }
 
-                        RowLayout {
-                            Layout.fillWidth: true
-                            visible: deviceRow.expanded
-                            Layout.leftMargin: Kirigami.Units.iconSizes.medium + Kirigami.Units.largeSpacing * 2
-                            Layout.rightMargin: Kirigami.Units.largeSpacing
-                            Layout.bottomMargin: Kirigami.Units.largeSpacing
+                            RowLayout {
+                                Layout.fillWidth: true
+                                visible: deviceRow.expanded
+                                Layout.leftMargin: Kirigami.Units.iconSizes.smallMedium + Kirigami.Units.largeSpacing * 2
+                                Layout.rightMargin: Kirigami.Units.largeSpacing
+                                Layout.bottomMargin: Kirigami.Units.largeSpacing
 
-                            PlasmaComponents3.Button {
-                                text: "Forget"
-                                icon.name: "user-trash-symbolic"
-                                onClicked: {
-                                    forgetDialog.targetDevice = modelData.device;
-                                    forgetDialog.open();
+                                PlasmaComponents3.Button {
+                                    text: "Forget"
+                                    icon.name: "user-trash-symbolic"
+                                    onClicked: {
+                                        forgetDialog.targetDevice = modelData.device;
+                                        forgetDialog.open();
+                                    }
+                                }
+                                Item { Layout.fillWidth: true }
+                                PlasmaComponents3.Label { text: "Trusted" }
+                                PlasmaComponents3.Switch {
+                                    id: trustSwitch
+                                    onToggled: {
+                                        if (modelData.device) modelData.device.trusted = checked;
+                                    }
+                                }
+                                Binding {
+                                    target: trustSwitch
+                                    property: "checked"
+                                    value: !!(modelData.device && modelData.device.trusted)
+                                    restoreMode: Binding.RestoreBinding
                                 }
                             }
-                            Item { Layout.fillWidth: true }
-                            PlasmaComponents3.Label { text: "Trusted" }
-                            PlasmaComponents3.Switch {
-                                id: trustSwitch
-                                onToggled: {
-                                    if (modelData.device) modelData.device.trusted = checked;
-                                }
-                            }
-                            Binding {
-                                target: trustSwitch
-                                property: "checked"
-                                value: !!(modelData.device && modelData.device.trusted)
-                                restoreMode: Binding.RestoreBinding
                             }
                         }
 
