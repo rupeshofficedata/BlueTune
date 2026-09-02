@@ -299,6 +299,7 @@ PlasmoidItem {
         // inside this card rather than a new card of its own.
         Kirigami.AbstractCard {
             Layout.fillWidth: true
+            Layout.fillHeight: false
             Layout.margins: Kirigami.Units.largeSpacing
             visible: deviceRepeater.count > 0
 
@@ -615,7 +616,11 @@ PlasmoidItem {
             }
         }
 
-        Item { Layout.fillHeight: true }
+        Kirigami.Separator {
+            Layout.fillWidth: true
+            Layout.topMargin: Kirigami.Units.largeSpacing * 0.5
+            Layout.bottomMargin: Kirigami.Units.largeSpacing * 0.5
+        }
 
         RowLayout {
             Layout.margins: Kirigami.Units.largeSpacing
