@@ -33,7 +33,7 @@ KDE's built-in Bluetooth applet is fine for basic pairing, but if you actually c
 
 | System tray icon |
 |---|
-| ![Tray icon with a badge showing 2 connected devices](screenshots/tray-icon-badge.png) |
+| <img src="screenshots/tray-icon-badge.png" alt="System tray icon (a badge appears here showing the connected device count when a device is connected)" width="140"> |
 
 ## Prerequisites
 
