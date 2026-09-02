@@ -618,8 +618,6 @@ PlasmoidItem {
 
         Kirigami.Separator {
             Layout.fillWidth: true
-            Layout.topMargin: Kirigami.Units.largeSpacing * 0.5
-            Layout.bottomMargin: Kirigami.Units.largeSpacing * 0.5
         }
 
         RowLayout {
