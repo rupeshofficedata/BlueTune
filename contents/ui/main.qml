@@ -325,6 +325,16 @@ PlasmoidItem {
                         property bool actionPending: false
                         property string actionError: ""
 
+                        // Where the device name's text actually starts inside
+                        // rowContent below (its Layout.margins left edge, plus
+                        // the icon's width, plus the spacing before the name
+                        // column) — shared with the expanded footer's
+                        // leftMargin so Forget/Trusted always align under the
+                        // name without the two formulas drifting apart.
+                        readonly property real footerIndent: Kirigami.Units.largeSpacing * 1.4
+                            + Kirigami.Units.iconSizes.smallMedium
+                            + Kirigami.Units.largeSpacing * 1.5
+
                         function toggleConnection() {
                             actionError = "";
                             actionPending = true;
@@ -407,6 +417,7 @@ PlasmoidItem {
 
                                 ColumnLayout {
                                     Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignTop
                                     spacing: Kirigami.Units.largeSpacing * 1.6
 
                                     PlasmaComponents3.Label {
@@ -536,10 +547,17 @@ PlasmoidItem {
                                     Layout.preferredHeight: Kirigami.Units.iconSizes.small
                                 }
                                 PlasmaComponents3.Button {
+                                    id: connectButton
                                     text: modelData.device.connected ? "Disconnect" : "Connect"
                                     enabled: !deviceRow.actionPending
                                     Layout.alignment: Qt.AlignTop
+                                    // preferredWidth keeps Connect/Disconnect the
+                                    // same width; minimumWidth is a floor so the
+                                    // longer label never clips if it ever needs
+                                    // more room than that (a different font, a
+                                    // future longer label).
                                     Layout.preferredWidth: Kirigami.Units.gridUnit * 5.2 * 0.85
+                                    Layout.minimumWidth: connectButton.implicitWidth
                                     onClicked: deviceRow.toggleConnection()
                                 }
                                 PlasmaComponents3.ToolButton {
@@ -558,7 +576,7 @@ PlasmoidItem {
                             RowLayout {
                                 Layout.fillWidth: true
                                 visible: deviceRow.expanded
-                                Layout.leftMargin: Kirigami.Units.iconSizes.smallMedium + Kirigami.Units.largeSpacing * 2
+                                Layout.leftMargin: deviceRow.footerIndent
                                 Layout.rightMargin: Kirigami.Units.largeSpacing
                                 Layout.bottomMargin: Kirigami.Units.largeSpacing
 
