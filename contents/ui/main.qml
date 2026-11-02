@@ -88,6 +88,23 @@ PlasmoidItem {
         refreshTimer.restart();
     }
 
+    // Sample-rate switch (LHDC): the rate comes from a global WirePlumber
+    // setting that is only read at startup, so the script rewrites it,
+    // restarts WirePlumber and reconnects the buds (~20 s, brief audio gap).
+    // 192 kHz is not offered: the buds fall back to 44.1 kHz and the link errors.
+    property bool rateSwitching: false
+    function setRate(rate, card, profile) {
+        rateSwitching = true;
+        launcher.run("bash " + Qt.resolvedUrl("../scripts/set-bt-rate.sh").toString().replace("file://", "")
+                     + " " + rate + " " + card + " " + profile);
+        rateDoneTimer.restart();
+    }
+    Timer {
+        id: rateDoneTimer
+        interval: 22000
+        onTriggered: { root.rateSwitching = false; exec.run(); }
+    }
+
     function iconForDevice(d) {
         if (d.icon && deviceIconMap[d.icon]) return deviceIconMap[d.icon];
         return "preferences-system-bluetooth-symbolic";
@@ -581,6 +598,44 @@ PlasmoidItem {
                                                         : root.shortSampleSpec(modelData.sampleSpec)
                                                     color: Kirigami.Theme.highlightColor
                                                     font.pointSize: Kirigami.Theme.defaultFont.pointSize * 0.7
+                                                }
+                                                Kirigami.Icon {
+                                                    visible: rateMouse.enabled
+                                                    source: "arrow-down"
+                                                    color: Kirigami.Theme.highlightColor
+                                                    Layout.preferredWidth: Kirigami.Units.iconSizes.small * 0.6
+                                                    Layout.preferredHeight: Kirigami.Units.iconSizes.small * 0.6
+                                                }
+                                            }
+
+                                            // Click the format pill to pick the LHDC sample rate.
+                                            MouseArea {
+                                                id: rateMouse
+                                                anchors.fill: parent
+                                                enabled: !!modelData.link && !root.rateSwitching
+                                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                                onClicked: rateMenu.popup()
+                                            }
+
+                                            QQC2.Menu {
+                                                id: rateMenu
+                                                QQC2.MenuItem {
+                                                    text: "44.1 kHz"
+                                                    checkable: true
+                                                    checked: !!modelData.link && modelData.link.rate === 44100
+                                                    onTriggered: root.setRate(44100, deviceRow.card, deviceRow.activeProfile)
+                                                }
+                                                QQC2.MenuItem {
+                                                    text: "48 kHz"
+                                                    checkable: true
+                                                    checked: !!modelData.link && modelData.link.rate === 48000
+                                                    onTriggered: root.setRate(48000, deviceRow.card, deviceRow.activeProfile)
+                                                }
+                                                QQC2.MenuItem {
+                                                    text: "96 kHz"
+                                                    checkable: true
+                                                    checked: !!modelData.link && modelData.link.rate === 96000
+                                                    onTriggered: root.setRate(96000, deviceRow.card, deviceRow.activeProfile)
                                                 }
                                             }
                                         }
