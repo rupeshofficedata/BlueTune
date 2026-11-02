@@ -73,6 +73,21 @@ PlasmoidItem {
     })
     readonly property var audioIcons: ["audio-card", "audio-headset", "audio-headphones"]
 
+    // "High Fidelity Playback (A2DP Sink, codec LHDC v5)" -> "LHDC v5";
+    // the two "Auto: ..." profiles have no codec in their description and
+    // are shown as-is.
+    function profileLabel(desc) {
+        var m = (desc || "").match(/codec ([^)]+)\)/);
+        return m ? m[1] : desc;
+    }
+
+    // Switches a card's PipeWire profile (= A2DP codec), then re-polls so the
+    // codec/format pills update without waiting for the 5s tick.
+    function setProfile(card, profile) {
+        launcher.run("pactl set-card-profile " + card + " " + profile);
+        refreshTimer.restart();
+    }
+
     function iconForDevice(d) {
         if (d.icon && deviceIconMap[d.icon]) return deviceIconMap[d.icon];
         return "preferences-system-bluetooth-symbolic";
@@ -97,7 +112,10 @@ PlasmoidItem {
                 connected: d.connected,
                 battery: d.battery ? d.battery.percentage : null,
                 codec: c.codec || null,
-                sampleSpec: c.sampleSpec || null
+                sampleSpec: c.sampleSpec || null,
+                card: c.card || null,
+                activeProfile: c.activeProfile || null,
+                profiles: c.profiles || []
             });
         }
         list.sort((a, b) => (b.connected ? 1 : 0) - (a.connected ? 1 : 0));
@@ -163,6 +181,14 @@ PlasmoidItem {
         running: true
         repeat: true
         triggeredOnStart: true
+        onTriggered: exec.run()
+    }
+
+    // Single-shot re-poll shortly after a profile switch (the sink needs a
+    // moment to be re-created under the new codec).
+    Timer {
+        id: refreshTimer
+        interval: 1200
         onTriggered: exec.run()
     }
 
@@ -321,6 +347,11 @@ PlasmoidItem {
                         id: deviceRow
                         Layout.fillWidth: true
                         spacing: 0
+
+                        // Exposed here because inside the codec menu's own
+                        // delegate `modelData` is the profile, not the device.
+                        readonly property string card: modelData.card || ""
+                        readonly property string activeProfile: modelData.activeProfile || ""
 
                         property bool expanded: false
                         property bool actionPending: false
@@ -488,6 +519,36 @@ PlasmoidItem {
                                                     text: (modelData.codec || "").toUpperCase()
                                                     color: Kirigami.Theme.highlightColor
                                                     font.pointSize: Kirigami.Theme.defaultFont.pointSize * 0.7
+                                                }
+                                                Kirigami.Icon {
+                                                    visible: modelData.profiles.length > 1
+                                                    source: "arrow-down"
+                                                    color: Kirigami.Theme.highlightColor
+                                                    Layout.preferredWidth: Kirigami.Units.iconSizes.small * 0.6
+                                                    Layout.preferredHeight: Kirigami.Units.iconSizes.small * 0.6
+                                                }
+                                            }
+
+                                            // Click the codec pill to pick another A2DP codec profile.
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                enabled: modelData.profiles.length > 1
+                                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                                onClicked: codecMenu.popup()
+                                            }
+
+                                            QQC2.Menu {
+                                                id: codecMenu
+                                                Instantiator {
+                                                    model: modelData.profiles
+                                                    delegate: QQC2.MenuItem {
+                                                        text: root.profileLabel(modelData.desc)
+                                                        checkable: true
+                                                        checked: modelData.name === deviceRow.activeProfile
+                                                        onTriggered: root.setProfile(deviceRow.card, modelData.name)
+                                                    }
+                                                    onObjectAdded: (index, object) => codecMenu.insertItem(index, object)
+                                                    onObjectRemoved: (index, object) => codecMenu.removeItem(object)
                                                 }
                                             }
                                         }

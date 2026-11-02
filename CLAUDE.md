@@ -148,8 +148,11 @@ address.
 
 ### Contract between the script and the QML
 
-`root.codecInfo` (from the script): array of `{mac, codec, sampleSpec}`,
-`codec`/`sampleSpec` nullable. `root.codecFor(address)` does a
+`root.codecInfo` (from the script, built with `jq` from `pactl --format=json`):
+array of `{mac, codec, sampleSpec, card, activeProfile, profiles:[{name, desc}]}`,
+`codec`/`sampleSpec` nullable (null when the card has no active sink).
+`profiles` is the card's available `a2dp*` profiles; clicking the codec pill
+opens a menu that runs `pactl set-card-profile <card> <name>` (`root.setProfile`). `root.codecFor(address)` does a
 case-insensitive MAC match against it. Changing this shape means
 updating both sides.
 
