@@ -113,6 +113,7 @@ PlasmoidItem {
                 battery: d.battery ? d.battery.percentage : null,
                 codec: c.codec || null,
                 sampleSpec: c.sampleSpec || null,
+                link: c.link || null,
                 card: c.card || null,
                 activeProfile: c.activeProfile || null,
                 profiles: c.profiles || []
@@ -573,7 +574,11 @@ PlasmoidItem {
                                                     Layout.preferredHeight: Kirigami.Units.iconSizes.small * 0.75
                                                 }
                                                 PlasmaComponents3.Label {
-                                                    text: root.shortSampleSpec(modelData.sampleSpec)
+                                                    // Prefer the rate negotiated with the buds (decoded from
+                                                    // BlueZ's codec config) over PipeWire's graph format.
+                                                    text: modelData.link && modelData.link.rate && modelData.link.bits
+                                                        ? modelData.link.bits + "-bit/" + Math.round(modelData.link.rate / 1000) + "kHz"
+                                                        : root.shortSampleSpec(modelData.sampleSpec)
                                                     color: Kirigami.Theme.highlightColor
                                                     font.pointSize: Kirigami.Theme.defaultFont.pointSize * 0.7
                                                 }
